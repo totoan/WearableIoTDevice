@@ -1,0 +1,119 @@
+QWidget {
+    color: rgb(100, 255, 170);
+    background-color: rgb(5, 12, 9);
+    font-size: 14px;
+}
+QLabel { background: transparent; }
+QDialog { border: 1px solid rgb(40, 180, 100); border-radius: 8px; }
+QPushButton {
+    background-color: rgb(10, 35, 22); border: 1px solid rgb(40, 180, 100);
+    border-radius: 6px;
+    padding: 6px 10px;
+    min-height: 26px;
+}
+QPushButton:hover { background-color: rgb(15, 55, 32); border-color: rgb(100, 255, 170); }
+QPushButton:pressed { background-color: rgb(20, 90, 45); }
+QPushButton:disabled { color: rgb(70, 110, 85); }
+QPushButton#powerButton { background: transparent; border: none; border-radius: 25px; padding: 0; min-height: 0; }
+QPushButton#powerButton:hover { background-color: rgba(10, 50, 25, 150); }
+QPushButton#powerButton:pressed { background-color: rgba(20, 90, 45, 230); }
+
+/* ===== YouTube tabs and touch lists ===== */
+QTabWidget::pane {
+    border: 1px solid rgb(30, 100, 65);
+}
+
+QTabBar::tab {
+    padding: 8px 16px;
+    background-color: rgb(10, 25, 17);
+}
+
+QTabBar::tab:selected {
+    background-color: rgb(15, 55, 32);
+    color: rgb(180, 255, 210);
+}
+
+QListWidget#youtubeVideoList {
+    border: none;
+    background-color: rgb(3, 9, 6);
+}
+
+QListWidget#youtubeVideoList::item {
+    border-bottom: 1px solid rgb(20, 65, 40);
+}
+
+QListWidget#youtubeVideoList::item:selected {
+    background-color: rgb(35, 65, 40);
+}
+
+QWidget#youtubeRow {
+    background-color: transparent;
+}
+
+QLineEdit {
+    padding: 6px;
+    border: 1px solid rgb(40, 180, 100);
+    border-radius: 4px;
+}
+
+/* ===== Scrollbars ===== */
+QScrollBar:vertical {
+    background-color: rgb(5, 12, 9);
+    width: 18px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background-color: rgb(30, 110, 65);
+    min-height: 45px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: rgb(60, 180, 105);
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: transparent;
+}
+
+QProgressBar {
+    background-color: rgb(10, 25, 17);
+    border: 1px solid rgb(30, 100, 65);
+    border-radius: 4px;
+}
+
+QProgressBar::chunk {
+    background-color: rgb(40, 180, 100);
+    border-radius: 3px;
+}
+
+/* ===== Playback sliders ===== */
+QSlider::groove:horizontal {
+    height: 6px;
+    background-color: rgb(10, 25, 17);
+    border: 1px solid rgb(30, 100, 65);
+    border-radius: 3px;
+}
+
+QSlider::sub-page:horizontal {
+    background-color: rgb(40, 180, 100);
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    width: 20px;
+    margin: -8px 0;
+    background-color: rgb(100, 255, 170);
+    border-radius: 10px;
+}
+
+QSlider::handle:horizontal:disabled {
+    background-color: rgb(50, 90, 65);
+}

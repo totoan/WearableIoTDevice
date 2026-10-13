@@ -1,0 +1,17 @@
+# Local environments, caches, and logs
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.log
+.build-temp/
+.env
+.env.*
+
+# Saved pairing and device settings
+Wearable/config/dashboard.json
+Wearable/config/roku.json
+Wearable/config/*.tmp
+
+# Reference code stays outside the public export
+Legacy/

@@ -1,0 +1,5 @@
+{
+    "address": "ws://YOUR_PC_ADDRESS:5186/wearable/socket",
+    "pairing_key": "COPY_THE_KEY_FROM_THE_PC_BACKEND",
+    "device_name": "Pi5 Wearable"
+}
