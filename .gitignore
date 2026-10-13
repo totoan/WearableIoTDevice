@@ -1,0 +1,18 @@
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# FreeCAD backups/temp
+*.FCBak
+*.FCStd1
+*.bak
+*.tmp
