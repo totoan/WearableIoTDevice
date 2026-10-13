@@ -2,6 +2,8 @@
 
 A chest-mounted IoT computer with a wrist-mounted display, powered by a Raspberry Pi 5.
 
+![Wearable computer prototype](images/wearable-prototype.jpg)
+
 ## Overview
 
 This project is a custom wearable computing platform built around a Raspberry Pi 5. The system combines a chest-mounted computer, battery and power-management hardware, custom 3D-printed mounting components, and a wrist-mounted display.
