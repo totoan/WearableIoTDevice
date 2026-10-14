@@ -5,10 +5,13 @@ used in 800x480 landscape orientation. Camera support is currently inactive.
 
 ## Included
 
-- Animated home screen, clock, and confirmed Pi shutdown.
+- Clean animated home screen, clock, and three breathing orange icon glows.
+- Settings menu for PC pairing; Media menu for YouTube and the TV remote.
+- Confirmed Pi shutdown and reboot, safely simulated in Windows preview.
 - Direct Roku TV remote, independent of the PC.
 - Optional dashboard connection and YouTube browsing/playback client.
 - Windows CMD preview and clean SCP deployment scripts.
+- Offline dictation in the reusable text keyboard, with microphone selection.
 
 The PC dashboard backend and Chrome extension are separate dependencies and
 are not included here. No pairing keys, Google credentials, local device settings,
@@ -19,6 +22,7 @@ software/
     Wearable/      Pi application: models, widgets, assets, and example settings
     tools/         Clean deployment exporter
     preview.cmd    Windows preview launcher
+    setup-voice.cmd Offline English model and voice dependencies
     deploy.cmd     SCP deployment launcher
 ```
 
@@ -37,6 +41,12 @@ The launcher uses Python 3.12 and creates a local `.venv`. Pi shutdown is
 simulated during Windows preview; Roku buttons still control your configured TV.
 
 ## Deploy
+
+For offline voice input, run `setup-voice.cmd` once on Windows. On the Pi,
+install `libportaudio2` and `alsa-utils`, update Python requirements, and run
+`.venv/bin/python utils/setup_speech.py` from `~/Wearable`. Models are downloaded
+separately on each device and excluded from Git and ordinary deployment exports.
+Audio remains on the device. Use Settings → Microphone to choose an input.
 
 From CMD in this `software` folder:
 

@@ -1,6 +1,6 @@
 """Scalable Legacy-style paths and their animated orange glow."""
 from PySide6.QtCore import QPointF, Qt, QTimer
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
 
@@ -32,8 +32,9 @@ class AnimatedBackground(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(self.rect(), QColor(5, 12, 9))
         for points in (
-            ((0, .14), (.36, .38), (.62, .38), (1, .15)),
-            ((0, .85), (.35, .68), (.62, .68), (1, .86)),
+            # Keep the paths in the middle band, clear of the corner icons.
+            ((0, .18), (.36, .38), (.62, .38), (1, .18)),
+            ((0, .72), (.35, .60), (.62, .60), (1, .72)),
         ):
             path = QPainterPath()
             path.moveTo(points[0][0] * self.width(), points[0][1] * self.height())
@@ -48,18 +49,20 @@ class AnimatedBackground(QWidget):
                 painter.setPen(QPen(color, width, Qt.PenStyle.SolidLine,
                                     Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
                 painter.drawPath(path)
-        for point in self.button_glows:
-            center = QPointF(point)
+        for button in self.button_glows:
+            center = QPointF(button.geometry().center())
+            strength = 0.25 + 0.75 * self.brightness
+            if button.is_emphasized:
+                strength = min(1.1, strength + 0.3)
+            glow = QRadialGradient(center, 34)
+            glow.setColorAt(0, QColor(255, 175, 30, int(225 * strength)))
+            glow.setColorAt(0.5, QColor(255, 110, 15, int(190 * strength)))
+            glow.setColorAt(0.8, QColor(255, 80, 10, int(75 * strength)))
+            glow.setColorAt(1, QColor(255, 80, 10, 0))
             painter.setPen(Qt.PenStyle.NoPen)
-            for radius, color in [(27, QColor(255, 80, 10, 55)),
-                                  (22, QColor(255, 110, 15, 150)),
-                                  (15, QColor(255, 190, 20, 180))]:
-                painter.setBrush(color)
-                painter.drawEllipse(center, radius, radius)
-            painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.setPen(QPen(QColor(255, 140, 40, 200), 2))
-            painter.drawEllipse(center, 22, 22)
+            painter.setBrush(glow)
+            painter.drawEllipse(center, 34, 34)
 
-    def set_button_glows(self, points):
-        self.button_glows = points
+    def set_button_glows(self, buttons):
+        self.button_glows = buttons
         self.update()

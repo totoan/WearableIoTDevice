@@ -21,7 +21,7 @@ if errorlevel 1 (
     "%PREVIEW_PYTHON%" -m ensurepip --upgrade
     if errorlevel 1 exit /b 1
 )
-"%PREVIEW_PYTHON%" -c "from PySide6 import QtWidgets, QtWebSockets" >nul 2>&1
+"%PREVIEW_PYTHON%" -c "from PySide6 import QtWidgets, QtWebSockets; import sounddevice, vosk" >nul 2>&1
 if errorlevel 1 (
     "%PREVIEW_PYTHON%" -m pip install -r "%~dp0Wearable\requirements.txt"
     if errorlevel 1 exit /b 1

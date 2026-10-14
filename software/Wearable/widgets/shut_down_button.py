@@ -1,32 +1,30 @@
 """Power control with safe preview behaviour and touch confirmation dialogs."""
-from pathlib import Path
 import shutil
 import sys
 
-from PySide6.QtCore import QProcess, QSize, Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QProcess, Qt
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+from widgets.glow_icon_button import GlowIconButton
+from widgets.power_menu import PowerMenu
 
-class ShutDownButton(QPushButton):
+
+class ShutDownButton(GlowIconButton):
     def __init__(self, parent=None, enable_shutdown=False):
-        super().__init__(parent)
+        super().__init__("shut_down.png", "Power", parent)
         if enable_shutdown and not sys.platform.startswith("linux"):
             raise ValueError("Real shutdown is supported only on Linux.")
         self.enable_shutdown = enable_shutdown
         self.setObjectName("powerButton")
-        self.setFixedSize(50, 50)
-        icon_path = Path(__file__).resolve().parent.parent / "assets" / "shut_down.png"
-        self.setIcon(QIcon(str(icon_path)))
-        self.setIconSize(QSize(42, 42))
-        self.setToolTip("Shut down device" if enable_shutdown else "Preview shutdown")
+        self.setToolTip("Power options" if enable_shutdown else "Preview power options")
         self.setAccessibleName("Power")
-        self.clicked.connect(self.confirm_shutdown)
+        self.clicked.connect(self.open_power_menu)
+        self.pending_action = "shutdown"
         self.shutdown_process = QProcess(self)
         self.shutdown_process.finished.connect(self.shutdown_finished)
         self.shutdown_process.errorOccurred.connect(self.shutdown_error)
 
-    def dialog(self, title, message, confirm=False):
+    def dialog(self, title, message, confirm=False, confirm_label="Shut down"):
         dialog = QDialog(self.window())
         dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowType.FramelessWindowHint)
         dialog.setWindowTitle(title)
@@ -44,28 +42,44 @@ class ShutDownButton(QPushButton):
             cancel = QPushButton("Cancel")
             cancel.clicked.connect(dialog.reject)
             buttons.addWidget(cancel)
-        accept = QPushButton("Shut down" if confirm else "OK")
+        accept = QPushButton(confirm_label if confirm else "OK")
         accept.clicked.connect(dialog.accept)
         buttons.addWidget(accept)
         layout.addLayout(buttons)
         return dialog.exec() == QDialog.DialogCode.Accepted
 
-    def confirm_shutdown(self):
-        message = "Shut down the Raspberry Pi?" if self.enable_shutdown else "Simulate shutting down? Your PC will stay running."
-        if not self.dialog("Power", message, confirm=True):
+    def open_power_menu(self):
+        menu = PowerMenu(self.window(), preview=not self.enable_shutdown)
+        if menu.exec() == QDialog.DialogCode.Accepted:
+            self.confirm_action(menu.action)
+        self.reset_emphasis()
+
+    def confirm_action(self, action):
+        if action not in {"shutdown", "reboot"}:
             return
+        label = "Reboot" if action == "reboot" else "Shut down"
+        message = f"{label} the Raspberry Pi?"
         if not self.enable_shutdown:
-            self.dialog("Preview", "Shutdown confirmed. On the Pi, this will power down the operating system.")
+            message = f"Simulate {label.lower()}? Your PC will stay running."
+        if not self.dialog(label, message, confirm=True, confirm_label=label):
+            return
+        self.pending_action = action
+        if not self.enable_shutdown:
+            self.dialog("Preview", f"{label} confirmed. On the Pi, this will {'restart' if action == 'reboot' else 'power down'} the operating system.")
             return
         self.setEnabled(False)
-        self.shutdown_process.start("sudo", ["-n", shutil.which("shutdown") or "/usr/sbin/shutdown", "-h", "now"])
+        option = "-r" if action == "reboot" else "-h"
+        self.shutdown_process.start("sudo", ["-n", shutil.which("shutdown") or "/usr/sbin/shutdown", option, "now"])
+
+    def failure_title(self):
+        return "Reboot failed" if self.pending_action == "reboot" else "Shutdown failed"
 
     def shutdown_finished(self, exit_code, exit_status):
         self.setEnabled(True)
         if exit_code != 0:
             details = bytes(self.shutdown_process.readAllStandardError()).decode(errors="replace").strip()
-            self.dialog("Shutdown failed", details or "The shutdown command did not succeed.")
+            self.dialog(self.failure_title(), details or "The power command did not succeed.")
 
     def shutdown_error(self, error):
         self.setEnabled(True)
-        self.dialog("Shutdown failed", self.shutdown_process.errorString())
+        self.dialog(self.failure_title(), self.shutdown_process.errorString())

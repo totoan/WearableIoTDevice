@@ -2,7 +2,7 @@
 
 A PySide6 application for a Raspberry Pi 5 and an 800x480 touchscreen.
 Includes an animated home screen, local-time clock, shutdown confirmation,
-and a direct Roku TV remote. No camera or microphone dependencies.
+and a direct Roku TV remote. Camera features are inactive; microphone dictation is included.
 
 The optional PC dashboard and YouTube features require a compatible
 DashboardAppV2 backend and Chrome extension, which are not included in
@@ -23,13 +23,20 @@ Wearable/
 ├── background.py               # Animated paths and button glow
 ├── theme.qss                   # Colours and control styling
 ├── widgets/
-│   ├── home_interface.py        # Home screen layout
+│   ├── home_interface.py        # Clock and three breathing icon buttons
+│   ├── glow_icon_button.py      # Shared transparent home icon control
+│   ├── settings_interface.py    # PC, microphone, and Wi-Fi settings menu
+│   ├── media_interface.py       # YouTube and TV choices
 │   ├── clock.py                 # Clock display and timer
-│   ├── shut_down_button.py      # Power button, confirmation, and shutdown
+│   ├── shut_down_button.py      # Confirmed shutdown/reboot and preview safety
+│   ├── power_menu.py            # Reboot, Shut down, and Cancel choices
 │   ├── dashboard_interface.py   # Pairing and two-way test controls
-│   ├── touch_keyboard.py        # Search keyboard
+│   ├── touch_keyboard.py        # Shared text keyboard and offline dictation
+│   ├── microphone_interface.py  # Input selection and voice test
+│   ├── wifi_interface.py        # Nearby networks and password entry
 │   ├── touch_slider.py          # Tap/drag sliders; send changes on release
-│   ├── roku_interface.py        # Direct living-room TV remote page
+│   ├── roku_interface.py        # Compact living-room TV remote
+│   ├── roku_find_interface.py   # Discover, select, or manually connect a TV
 │   ├── roku_address_dialog.py   # Touch keypad for the TV's IPv4 address
 │   ├── youtube_interface.py     # Three-tab YouTube page
 │   └── youtube/
@@ -42,7 +49,12 @@ Wearable/
 │   ├── dashboard_handler.py     # PC connection, messages, and reconnecting
 │   ├── youtube_handler.py       # List requests and response timeouts
 │   ├── playback_handler.py      # Chrome state and playback commands
+│   ├── speech_handler.py        # Shared voice service and saved microphone
+│   ├── speech_worker.py         # Capture/recognition threads
+│   ├── pc_speech_client.py      # Paired PC dictation with offline fallback
+│   ├── wifi_handler.py          # Asynchronous NetworkManager operations
 │   ├── roku_handler.py          # Direct Roku HTTP connection and buttons
+│   ├── roku_discovery.py        # Local network search and TV verification
 │   └── thumbnail_handler.py     # Asynchronous thumbnail loading
 ├── config/
 │   ├── dashboard.example.json   # Template exported to the Pi
@@ -50,9 +62,15 @@ Wearable/
 │   ├── roku.example.json        # Initial TV address (192.168.1.100)
 │   └── roku.json                # Optional saved TV address; never exported
 ├── utils/
-│   └── time_utils.py            # Local time helper
+│   ├── time_utils.py            # Local time helper
+│   ├── audio_devices.py         # Select microphones by name
+│   └── setup_speech.py          # One-time offline model download
 ├── assets/
-│   └── shut_down.png
+│   ├── shut_down.png
+│   ├── settings.svg
+│   ├── media.svg
+│   ├── arrow.svg
+│   └── microphone.svg
 ├── requirements.txt
 └── start-kiosk.sh               # Pi graphical session launcher
 ```
@@ -66,7 +84,7 @@ add it to the export list in `tools/deploy.py` so CMD deployment includes it.
 
 Start/restart the DashboardAppV2 backend to create its local pairing settings
 in `backend/wearable/local/settings.json`. The dashboard's new **Wearable**
-panel and this app's **PC Dashboard** page use the same pairing key.
+panel and this app's **Settings → PC Dashboard connection** page use the same pairing key.
 
 For a Windows preview, both use `ws://localhost:5186/wearable/socket`. Save
 and connect on each side, then press **Test dashboard** or **Test wearable**.
@@ -102,7 +120,7 @@ Full PC setup instructions live in DashboardAppV2's `backend/wearable/README.md`
 ## YouTube browsing
 
 Restart the dashboard backend to load this stage, then launch `preview.cmd`.
-Saved pairing details are reused. Select **YouTube** from the home screen:
+Saved pairing details are reused. Select **Media → YouTube** from the home screen:
 
 - **Subscriptions** reads the same latest 20 uploads shown on the dashboard.
   The dashboard refreshes Google every 15 minutes. While visible, the wearable
@@ -155,7 +173,7 @@ Open a YouTube tab, refresh the popup's tab list, choose the desired tab,
 and press **Use selected tab**. The extension remembers the key. Tab selection
 survives worker restarts, but select the tab again after fully closing Chrome.
 
-Run `preview.cmd`, open YouTube on the wearable, select a video, and press
+Run `preview.cmd`, open **Media → YouTube** on the wearable, select a video, and press
 **Play on PC**. Test play/pause and Next, then make a manual playback change
 in Chrome and confirm the wearable updates within a few seconds.
 
@@ -172,7 +190,7 @@ on the PC; normal Pi deployment includes only the wearable Python files.
 
 ## Living Room TV remote
 
-The home screen's **Living Room TV** button opens a direct Roku remote.
+Open **Media → Living Room TV** from the home screen for the direct Roku remote.
 Set your TV's IP with **TV address**. It connects on the local network without the PC dashboard,
 Chrome extension, or Google credentials. No additional Pi packages are needed.
 
@@ -181,7 +199,7 @@ mobile apps → Network access → Enabled**. The Pi and TV must be on the same
 home network. These commands use Roku's External Control Protocol:
 https://developer.roku.com/dev/docs/external-control-api
 
-To test from CMD, run `preview.cmd` and open **Living Room TV**. The page reads
+To test from CMD, run `preview.cmd` and open **Media → Living Room TV**. The page reads
 the TV's device information automatically. Try navigation, OK, Back, TV home,
 Options, Play / Pause, Rewind, Fast forward, Replay, Volume +/−, and Mute.
 These are real TV commands even in the Windows preview. **TV power off** asks
@@ -191,13 +209,14 @@ This stage has no TV power-on or input-selection buttons.
 Button behaviour follows the current Roku app. A successful message means the
 TV accepted the key, rather than confirming a specific playback change. Network
 requests run asynchronously, time out after four seconds, and are never replayed.
-Press **Check TV** to reconnect after turning the TV back on or restoring Wi-Fi.
+Open **Find TV → Connect saved TV** to reconnect after turning the TV back on
+or restoring Wi-Fi.
 If the TV blocks a button, the page explains the required network-access setting.
 
 **TV address** opens a numeric touch keypad. Saving creates `config/roku.json`,
 which is preserved during later deployments. Without that local file, the app
 uses `config/roku.example.json`, with the example address `192.168.1.100`. If its IP
-changes, use the keypad or edit the local JSON over SSH. A DHCP reservation in
+changes, search again, use the keypad, or edit the local JSON over SSH. A DHCP reservation in
 your router can keep this address stable. Only the example file is exported.
 
 After the PC test, deploy from CMD:
@@ -210,6 +229,148 @@ deploy.cmd --user YOUR_LOGIN --host YOUR_PI_HOST
 Then restart the wearable app or reboot the Pi. No dashboard restart is needed
 for this feature. This page provides basic remote buttons; YouTube browsing and
 sending videos to the TV are separate future features.
+
+## Finding a Roku TV
+
+In the controller, open **Find TV**. A five-second local network search lists
+responding Roku televisions by name, model, and IP address. Select one and press
+**Connect selected TV**. The successful selection is saved for later sessions.
+
+**Search again** repeats discovery; **Connect saved TV** retries your saved TV.
+**Enter address** provides the manual touch keypad. Leaving this menu stops the
+search. Roku streaming players are filtered out of the results.
+
+The remote uses compact buttons and vector arrow icons for the four directions.
+Connection setup stays in Find TV. Discovery uses SSDP multicast and direct
+HTTP device checks, independently of the PC dashboard. A sleeping TV, guest
+network isolation, or blocked multicast can prevent discovery; turn the TV on
+or use its known IP address. No extra Python dependencies are needed.
+
+## Wi-Fi settings
+
+Open Settings → Wi-Fi to scan nearby wireless networks. Select a network and
+press Connect selected network. New protected networks prompt for a masked
+password using the touch keyboard; Symbols and Shift provide punctuation and
+capital letters. Previously saved passwords are reused by NetworkManager.
+The app passes passwords over process stdin, never command arguments, logs,
+or app configuration. NetworkManager stores its own connection credentials
+outside this project. Password fields disable microphone dictation.
+
+Windows preview shows sample networks and simulates connection without changing
+your PC networking. Real scanning and connection need the Pi's NetworkManager:
+
+```sh
+nmcli general status
+nmcli general permissions
+```
+
+If nmcli is missing, install `network-manager`. The normal Raspberry Pi OS
+local, active console session should have permission. If connection reports
+an authorization failure, configure a narrowly scoped Polkit rule over SSH:
+
+```sh
+sudo nano /etc/polkit-1/rules.d/49-wearable-wifi.rules
+```
+
+Add this, replacing YOUR_LOGIN with the Pi login:
+
+```javascript
+polkit.addRule(function(action, subject) {
+    var allowed = [
+        "org.freedesktop.NetworkManager.network-control",
+        "org.freedesktop.NetworkManager.settings.modify.system",
+        "org.freedesktop.NetworkManager.wifi.scan"
+    ];
+    if (subject.user == "YOUR_LOGIN" && subject.local && subject.active &&
+        allowed.indexOf(action.id) >= 0) {
+        return polkit.Result.YES;
+    }
+});
+```
+
+Save in nano, then set ordinary root-owned permissions and restart the app:
+
+```sh
+sudo chown root:root /etc/polkit-1/rules.d/49-wearable-wifi.rules
+sudo chmod 644 /etc/polkit-1/rules.d/49-wearable-wifi.rules
+```
+
+Polkit reloads its rules automatically. No sudo permission for arbitrary nmcli
+commands is needed. The rule applies to the local active wearable session,
+not an SSH session. Enterprise networks requiring identities/certificates and
+hidden networks need separate NetworkManager configuration in this version.
+Switching networks can disconnect SSH and change the Pi's address.
+
+Reference: [NetworkManager nmcli manual](https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nmcli.html).
+
+## Voice input
+
+The reusable text keyboard includes Speak, Stop, an input-level meter, and a
+live speech preview. Stop inserts recognized text at the cursor; it remains
+editable until you explicitly submit. Recording never submits a search or sends
+a message. Cancel discards unfinished dictation. Each recording is limited to
+two minutes. Titles, submit labels, and text limits can vary so future message
+screens can use the same keyboard and voice service.
+
+Recognition prefers the paired PC when its backend is connected. The PC uses
+the larger English Whisper small.en model locally on its CPU. If unavailable,
+the Pi keeps the Vosk offline result from the same recording. No cloud account
+or subscription is required. The keyboard indicates PC Whisper or offline
+after insertion; accuracy still varies, so review text before submitting.
+
+Audio stays in memory on the Pi. When using PC recognition, it is sent to the
+paired backend, briefly written inside its ignored wearable/local/speech/requests
+folder, and deleted after completion or cancellation. Audio and transcripts
+are not saved to app preferences or exported. Initial model downloads need
+internet; recognition afterward does not. This uses the existing paired LAN
+connection and pairing key.
+
+Install the companion PC speech service and restart the dashboard backend
+to load the speech endpoint. To prepare the PC speech model,
+run this from DashboardAppV2 in CMD:
+
+```bat
+backend\wearable\speech\setup.cmd
+```
+
+It creates an isolated Python environment and downloads the approximately
+500 MB model into ignored backend/wearable/local/speech storage. Python 3.12
+is required. Then restart the dashboard backend. Keep the Pi offline model
+installed even when PC speech is available.
+
+On Windows, run this once from the project folder in CMD:
+
+```bat
+setup-voice.cmd
+preview.cmd
+```
+
+Open Settings → Microphone, choose an input, and press Save microphone. Test
+dictation opens the same keyboard. The system default is used until you select
+a microphone. Device names and audio APIs are saved rather than USB device
+numbers. Mono/stereo inputs and common native sample rates are supported.
+
+After deployment, set up voice on the Pi over SSH:
+
+```sh
+sudo apt update
+sudo apt install libportaudio2 alsa-utils
+cd "$HOME/Wearable"
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python utils/setup_speech.py
+sudo reboot
+```
+
+The model lives in `speech_models/vosk-model-small-en-us-0.15` and is downloaded
+separately on PC and Pi. Normal deployment preserves it and excludes it from
+transfers. Saved microphone settings in `config/speech.json` are also preserved
+and excluded from Git/export. If the model or microphone is unavailable, the
+keyboard shows guidance and ordinary typing remains available.
+
+For Linux microphone troubleshooting, run `arecord -l`. If access is denied,
+check the login user's audio permissions. References:
+[Vosk model](https://alphacephei.com/vosk/models) and
+[audio input formats](https://python-sounddevice.readthedocs.io/en/latest/api/checking-hardware.html).
 
 ## Test on Windows
 
@@ -227,9 +388,13 @@ No environment activation is needed. Both Windows launchers run from CMD without
 The window's content starts at 800x480. Windows display scaling can make its
 physical pixel size larger; use 100% display scaling for a literal pixel preview.
 Check the orange glow fades in/out and pauses, the clock advances every second,
-and the lower-right power button opens a touch-sized confirmation. Cancel should
-return to the UI; Shut down should show a simulated shutdown message and keep
-Windows running. Escape closes the preview. Resizing should keep the clock centred
+and all three home icon glows breathe with the background. Settings is in the
+upper right; Media is in the lower left; Power remains in the lower right.
+Check Settings opens the PC connection menu, and Media offers YouTube and the
+TV remote. Back returns to the containing menu; Home returns to the clock.
+The power button opens Reboot, Shut down, and Cancel choices. Each action
+requires confirmation. Windows previews simulate both actions and keep the PC
+running. Cancelling either dialog returns to the UI. Escape closes the preview. Resizing should keep the clock centred
 and the power button anchored at the bottom right.
 
 Fullscreen preview:
@@ -302,12 +467,12 @@ startx "$HOME/Wearable/start-kiosk.sh" -- :0 -nocursor
 
 This launch enables real shutdown. Confirming the power dialog runs
 `sudo -n shutdown -h now`. If your user lacks passwordless permission, the UI
-reports the error. To grant only this command, find its absolute path using
+reports the error. To grant only these two actions, find the command's absolute path using
 `command -v shutdown`, then use `sudo visudo -f /etc/sudoers.d/wearable-power`
 and add the following, adjusting YOUR_LOGIN and the path:
 
 ```text
-YOUR_LOGIN ALL=(root) NOPASSWD: /usr/sbin/shutdown -h now
+YOUR_LOGIN ALL=(root) NOPASSWD: /usr/sbin/shutdown -h now, /usr/sbin/shutdown -r now
 ```
 
 For a safe Pi preview in an existing graphical session, omit `--enable-shutdown`:

@@ -1,3 +1,5 @@
 # Qt Widgets and WebSockets. No browser engine is needed on the wearable.
 PySide6-Essentials>=6.10,<7
 PySide6-Addons>=6.10,<7
+sounddevice>=0.5,<0.6
+vosk>=0.3.45,<0.4

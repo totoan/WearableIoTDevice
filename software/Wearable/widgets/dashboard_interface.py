@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBox
 
 
 class DashboardInterface(QWidget):
-    nav_to_home = Signal()
+    nav_back = Signal()
 
     def __init__(self, handler, parent=None):
         super().__init__(parent)
@@ -50,8 +50,8 @@ class DashboardInterface(QWidget):
         layout.addWidget(self.message_label)
         layout.addStretch()
 
-        close_button = QPushButton("Home")
-        close_button.clicked.connect(self.nav_to_home.emit)
+        close_button = QPushButton("Back")
+        close_button.clicked.connect(self.nav_back.emit)
         layout.addWidget(close_button)
 
         handler.status_changed.connect(self.status_label.setText)

@@ -14,7 +14,7 @@ from models.roku_handler import RokuHandler
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fullscreen", action="store_true")
-    parser.add_argument("--enable-shutdown", action="store_true", help="Enable real shutdown on Linux; disabled by default.")
+    parser.add_argument("--enable-shutdown", action="store_true", help="Enable real shutdown and reboot on Linux; disabled by default.")
     args = parser.parse_args()
     if args.enable_shutdown and not sys.platform.startswith("linux"):
         parser.error("Real shutdown is supported only on Linux. Omit --enable-shutdown for a preview.")

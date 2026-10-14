@@ -40,7 +40,8 @@ class SearchInterface(BrowseInterface):
         self.set_context("youtube.search", {"query": query}, f"Results for: {query}", remember=False)
 
     def open_keyboard(self):
-        keyboard = TouchKeyboard(self.search_input.text(), self)
+        keyboard = TouchKeyboard(self.search_input.text(), self, title="Search YouTube", accept_label="Search", max_length=100)
         if keyboard.exec() == QDialog.DialogCode.Accepted:
             self.search_input.setText(keyboard.input.text())
             self.search()
+        keyboard.deleteLater()

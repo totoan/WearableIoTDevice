@@ -14,9 +14,15 @@ QPushButton {
 QPushButton:hover { background-color: rgb(15, 55, 32); border-color: rgb(100, 255, 170); }
 QPushButton:pressed { background-color: rgb(20, 90, 45); }
 QPushButton:disabled { color: rgb(70, 110, 85); }
-QPushButton#powerButton { background: transparent; border: none; border-radius: 25px; padding: 0; min-height: 0; }
-QPushButton#powerButton:hover { background-color: rgba(10, 50, 25, 150); }
-QPushButton#powerButton:pressed { background-color: rgba(20, 90, 45, 230); }
+QPushButton#powerButton, QPushButton#homeIconButton {
+    background: transparent;
+    border: none;
+    border-radius: 25px;
+    padding: 0;
+    min-height: 0;
+}
+QPushButton#powerButton:hover, QPushButton#homeIconButton:hover { background: transparent; }
+QPushButton#powerButton:pressed, QPushButton#homeIconButton:pressed { background: transparent; }
 
 /* ===== YouTube tabs and touch lists ===== */
 QTabWidget::pane {
@@ -48,6 +54,21 @@ QListWidget#youtubeVideoList::item:selected {
 
 QWidget#youtubeRow {
     background-color: transparent;
+}
+
+QListWidget#rokuTvList {
+    border: none;
+    background-color: rgb(3, 9, 6);
+}
+
+QListWidget#rokuTvList::item {
+    padding: 6px;
+    border-bottom: 1px solid rgb(20, 65, 40);
+}
+
+QListWidget#rokuTvList::item:selected {
+    background-color: rgb(35, 65, 40);
+    color: rgb(180, 255, 210);
 }
 
 QLineEdit {

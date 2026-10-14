@@ -9,7 +9,7 @@ from widgets.youtube.subscriptions_interface import SubscriptionsInterface
 
 
 class YouTubeInterface(QWidget):
-    nav_to_home = Signal()
+    nav_back = Signal()
 
     def __init__(self, handler, parent=None):
         super().__init__(parent)
@@ -30,8 +30,8 @@ class YouTubeInterface(QWidget):
         handler.connection_changed.connect(self.update_connection)
         header.addWidget(self.connection_label)
 
-        home = QPushButton("Home")
-        home.clicked.connect(self.nav_to_home.emit)
+        home = QPushButton("Back")
+        home.clicked.connect(self.nav_back.emit)
         header.addWidget(home)
         layout.addLayout(header)
 

@@ -11,6 +11,8 @@ __pycache__/
 # Saved pairing and device settings
 Wearable/config/dashboard.json
 Wearable/config/roku.json
+Wearable/config/speech.json
+Wearable/speech_models/
 Wearable/config/*.tmp
 
 # Reference code stays outside the public export
